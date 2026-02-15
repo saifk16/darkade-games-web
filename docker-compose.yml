@@ -1,0 +1,71 @@
+# Run: 
+#   docker compose up
+#   docker compose up --watch -d (Use this normally)
+#
+# Rebuild and run:
+#   docker compose build
+#   docker compose up --watch -d
+#
+# Stop:
+#   docker compose down
+#
+# Stop and delete everything
+#   docker compose down -v
+
+include:
+  - supabase/docker-compose.yml
+  # - supabase/dev/docker-compose.dev.yml
+
+services:
+  nginx:
+    container_name: nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    depends_on:
+      - kong
+      - web_app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NGINX_SERVER_NAME=${NGINX_SERVER_NAME}
+    networks:
+      - nginx-net
+
+  # https://github.com/vercel/next.js/blob/canary/examples/with-docker-compose/README.md
+  web_app:
+    container_name: web_app
+    build:
+      context: ./web-app
+      dockerfile: dev.Dockerfile
+    platform: linux/amd64
+    env_file:
+      - ./web-app/.env
+    environment:
+      - SUPABASE_INTERNAL_URL=http://supabase-kong:8000
+    develop:
+      watch:
+        # Sync source files
+        - action: sync
+          path: ./web-app/src
+          target: /app/src
+
+        - action: sync
+          path: ./web-app/public
+          target: /app/public
+
+        # Rebuild when dependencies or config change
+        - action: rebuild
+          path: ./web-app/package.json
+
+        - action: rebuild
+          path: ./web-app/pnpm-lock.yaml
+    ports:
+      - "3000:3000"
+    networks:
+      - nginx-net
+
+networks:
+  nginx-net:
+    driver: bridge

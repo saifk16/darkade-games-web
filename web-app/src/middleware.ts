@@ -1,0 +1,50 @@
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+
+export async function middleware(request: NextRequest) {
+    let response = NextResponse.next({
+        request: {
+            headers: request.headers,
+        },
+    })
+
+    const url = process.env.SUPABASE_INTERNAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    console.log('Middleware Supabase URL:', url); // DEBUG
+    const supabase = createServerClient(
+        url,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() {
+                    return request.cookies.getAll()
+                },
+                setAll(cookiesToSet) {
+                    cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+                    response = NextResponse.next({
+                        request: {
+                            headers: request.headers,
+                        },
+                    })
+                    cookiesToSet.forEach(({ name, value, options }) =>
+                        response.cookies.set(name, value, options)
+                    )
+                },
+            },
+        }
+    )
+
+    try {
+        await supabase.auth.getUser()
+    } catch (error) {
+        console.error('Middleware Auth Error:', error);
+        // Do not block the request, just let it pass as unauthenticated
+    }
+
+    return response
+}
+
+export const config = {
+    matcher: [
+        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    ],
+}
