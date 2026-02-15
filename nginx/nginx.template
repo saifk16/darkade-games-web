@@ -1,3 +1,0 @@
-map $server $server_name_var {
-    default "$NGINX_SERVER_NAME"
-}

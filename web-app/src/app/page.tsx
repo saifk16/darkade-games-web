@@ -1,162 +1,65 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import HeroSection from '@/components/HeroSection';
-import OccasionNav from '@/components/OccasionNav';
-import RelationNav from '@/components/RelationNav';
-import HorizontalScroll from '@/components/HorizontalScroll';
-import ProductCard from '@/components/ProductCard'; // Added Import
-import Link from 'next/link'; // Added Import
-
-import CategoryGrid from '@/components/CategoryGrid';
-import { useRouter } from 'next/navigation';
-import { Suspense } from 'react';
-
-// Main Home Content Component
-function HomeContent() {
-  const [occasionProducts, setOccasionProducts] = useState<any[]>([]);
-  const [relationProducts, setRelationProducts] = useState<any[]>([]);
-  const [mixProducts, setMixProducts] = useState<any[]>([]); // Added State
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-
-  const handleNavSelect = (category: string) => {
-    // Navigate to search page with the selected tag
-    router.push(`/search?tag=${encodeURIComponent(category)}`);
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-
-      try {
-        // Fetch Active Products
-        const { data: allProds, error: prodError } = await supabase
-          .from('products')
-          .select('*')
-          .eq('status', 'active');
-
-        if (prodError) throw prodError;
-
-        if (!allProds) {
-          setIsLoading(false);
-          return;
-        }
-
-        // Fetch Dynamic Occasions & Relations for filtering
-        const { data: occData, error: occError } = await supabase.from('occasions').select('label').eq('is_active', true);
-        if (occError) console.error("Error fetching occasions:", occError);
-
-        const { data: relData, error: relError } = await supabase.from('relations').select('label').eq('is_active', true);
-        if (relError) console.error("Error fetching relations:", relError);
-
-        const occTags = occData?.map(o => o.label) || ['Birthday', 'Anniversary', 'Wedding'];
-        const relTags = relData?.map(r => r.label) || ['For Her', 'For Him', 'Mom', 'Dad'];
-
-        // 1. Best for Every Occasion
-        const occasionMix = allProds.filter((p: any) =>
-          p.tags?.some((t: string) => occTags.includes(t)) ||
-          occTags.some(tag => p.name.includes(tag))
-        ).slice(0, 10);
-
-        // 2. Best for Every Relation
-        const relationMix = allProds.filter((p: any) =>
-          p.tags?.some((t: string) => relTags.includes(t)) ||
-          relTags.some(tag => p.name.includes(tag))
-        ).slice(0, 10);
-
-        // 3. Mix Products (Random Shuffle)
-        const shuffled = [...allProds].sort(() => 0.5 - Math.random());
-        const mix = shuffled.slice(0, 20); // Show top 20 random products
-
-        setOccasionProducts(occasionMix);
-        setRelationProducts(relationMix);
-        setMixProducts(mix);
-      } catch (err: any) {
-        console.error('Error fetching homepage data:', err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-
-      {/* 1. Hero Section */}
-      <HeroSection />
-
-      {/* 2. Shop by Occasion */}
-      <OccasionNav onSelect={handleNavSelect} />
-
-
-
-      {/* 2.2 Horizontal Scroll: Best of Occasions */}
-      {!isLoading && occasionProducts.length > 0 && (
-        <HorizontalScroll
-          title="Best for Every Occasion"
-          products={occasionProducts}
-          link="/search"
-        />
-      )}
-
-      {/* 2.3 Category Grid (New) */}
-      <CategoryGrid />
-
-
-
-      {/* 3. Shop by Relation */}
-      <RelationNav onSelect={handleNavSelect} />
-
-      {/* 3.1 Horizontal Scroll: Best for Every Relation */}
-      {!isLoading && relationProducts.length > 0 && (
-        <HorizontalScroll
-          title="Best for Every Relation"
-          products={relationProducts}
-          link="/search"
-        />
-      )}
-
-      {/* 4. Discover More (Mix Products) */}
-      {!isLoading && mixProducts.length > 0 && (
-        <section className="py-16 px-4 max-w-7xl mx-auto">
-          <div className="text-center mb-10">
-            <span className="text-indigo-600 font-bold uppercase tracking-wider text-xs">Curated For You</span>
-            <h2 className="text-3xl md:text-4xl font-black text-slate-900 mt-2">Discover More</h2>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
-            {mixProducts.map((p) => (
-              <ProductCard
-                key={p.id}
-                id={p.id}
-                name={p.name}
-                price={p.price}
-                imageUrl={p.image_url}
-                additionalImages={p.additional_images}
-                sellerId={p.seller_id}
-              />
-            ))}
-          </div>
-
-          <div className="mt-12 text-center">
-            <Link href="/search" className="inline-flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-800 transition-all hover:scale-105 shadow-xl shadow-slate-200">
-              View All Products
-            </Link>
-          </div>
-        </section>
-      )}
-
-    </main>
-  );
-}
+import Image from "next/image";
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>}>
-      <HomeContent />
-    </Suspense>
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+        <Image
+          className="dark:invert"
+          src="/next.svg"
+          alt="Next.js logo"
+          width={100}
+          height={20}
+          priority
+        />
+        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+            To get started, edit the page.tsx file.
+          </h1>
+          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+            Looking for a starting point or more instructions? Head over to{" "}
+            <a
+              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              Templates
+            </a>{" "}
+            or the{" "}
+            <a
+              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              Learning
+            </a>{" "}
+            center.
+          </p>
+        </div>
+        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+          <a
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
+            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              className="dark:invert"
+              src="/vercel.svg"
+              alt="Vercel logomark"
+              width={16}
+              height={16}
+            />
+            Deploy Now
+          </a>
+          <a
+            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
+            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Documentation
+          </a>
+        </div>
+      </main>
+    </div>
   );
 }
