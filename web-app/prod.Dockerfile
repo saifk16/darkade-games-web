@@ -21,6 +21,7 @@ COPY public ./public
 COPY next.config.js .
 COPY tsconfig.json .
 COPY postcss.config.mjs .
+COPY components.json .
 
 #ARG ENV_VARIABLE
 #ENV ENV_VARIABLE=${ENV_VARIABLE}
