@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Link } from "@/components/ui/Link"
 import {Select, SelectItem} from '@/components/ui/Select';
 
 export default function Home() {
@@ -14,6 +15,13 @@ export default function Home() {
           <SelectItem>Snake</SelectItem>
         </Select>
       </main>
+
+      <Link
+          href="/signup"
+          className="inline-flex h-10 items-center justify-center rounded-xl px-5 text-sm font-medium no-underline"
+      >
+        Get started
+      </Link>
     </div>
   );
 }
